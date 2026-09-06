@@ -177,6 +177,39 @@ export const ApiConfigModal: React.FC<ApiConfigModalProps> = ({
                 </p>
               </div>
             </div>
+
+            {/* 5. Google Maps Platform */}
+            <div className="p-4 rounded-xl border border-gray-200 bg-white flex items-start gap-3 shadow-2xs">
+              <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100 mt-0.5">
+                <Globe className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    Google Maps Platform Vector Engine
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <CheckCircle2 className="w-3 h-3" /> INTEGRATED
+                    </span>
+                  </h4>
+                  <a
+                    href="https://mapsplatform.google.com/maps-demo-key?utm_campaign=gmp_mcp_codeassist_v1_aistudio"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800"
+                  >
+                    <span>Get Demo Key</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  Powers high-resolution coastal Satellite imagery, Hybrid vector labels, AdvancedMarker vessel telemetry, and dynamic drift trajectory geometry via <code>@vis.gl/react-google-maps</code>.
+                </p>
+                <div className="mt-2 text-[11px] text-gray-600 bg-gray-50 p-2 rounded border border-gray-100 flex items-center justify-between">
+                  <span>Environment variable: <code>VITE_GOOGLE_MAPS_API_KEY</code></span>
+                  <span className="text-[10px] text-gray-500">Maps JS SDK v=weekly</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

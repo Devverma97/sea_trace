@@ -8,7 +8,8 @@ import {
   SlickDetection,
   Vessel,
 } from '../types';
-import { Layers, Eye, Navigation, Ship, AlertTriangle, Crosshair } from 'lucide-react';
+import { Layers, Eye, Navigation, Ship, AlertTriangle, Crosshair, MapPin } from 'lucide-react';
+import { GoogleMarineMap } from './GoogleMarineMap';
 
 interface MarineMapProps {
   incident: Incident;
@@ -33,6 +34,12 @@ export const MarineMap: React.FC<MarineMapProps> = ({
   onSelectVessel,
   heightClass = 'h-[580px]',
 }) => {
+  const hasGoogleKey = Boolean(
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY &&
+    (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string).trim() !== ''
+  );
+  const [engine, setEngine] = useState<'google' | 'leaflet'>('google');
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const layerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -43,6 +50,23 @@ export const MarineMap: React.FC<MarineMapProps> = ({
   const [showForecast, setShowForecast] = useState(true);
   const [showVessels, setShowVessels] = useState(true);
   const [showTracks, setShowTracks] = useState(true);
+
+  if (engine === 'google') {
+    return (
+      <GoogleMarineMap
+        incident={incident}
+        detection={detection}
+        backwardRun={backwardRun}
+        forwardRun={forwardRun}
+        vessels={vessels}
+        candidates={candidates}
+        selectedVesselId={selectedVesselId}
+        onSelectVessel={onSelectVessel}
+        heightClass={heightClass}
+        onSwitchToStandardMap={() => setEngine('leaflet')}
+      />
+    );
+  }
 
   // Initialize Map
   useEffect(() => {
@@ -338,26 +362,38 @@ export const MarineMap: React.FC<MarineMapProps> = ({
   ]);
 
   return (
-    <div className={`relative w-full ${heightClass} rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm`}>
+    <div className={`relative w-full ${heightClass} rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-xl`}>
       {/* Map DOM Element */}
       <div ref={mapContainerRef} className="w-full h-full" />
 
       {/* Floating Basemap & Layer Controls */}
       <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
-        {/* Basemap switcher */}
-        <div className="bg-white/95 backdrop-blur-md border border-gray-200 rounded-lg p-1 flex gap-1 shadow-md text-xs font-semibold">
+        {/* Basemap switcher & Engine Switcher */}
+        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-lg p-1 flex gap-1 shadow-lg text-xs font-semibold items-center">
           <button
-            onClick={() => setBaseMap('light')}
+            onClick={() => setEngine('google')}
+            className="px-2.5 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+            title={hasGoogleKey ? "Switch to Google Maps Platform" : "Google Maps Platform (API Key or Demo Key required)"}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Google Maps</span>
+            {!hasGoogleKey && (
+              <span className="text-[10px] bg-indigo-800 text-indigo-200 px-1 py-0.2 rounded font-normal">Setup</span>
+            )}
+          </button>
+          <div className="h-4 w-px bg-slate-700" />
+          <button
+            onClick={() => setBaseMap('dark')}
             className={`px-2.5 py-1 rounded transition-colors ${
-              baseMap === 'light' ? 'bg-indigo-600 text-white font-bold' : 'text-gray-600 hover:text-gray-900'
+              baseMap === 'dark' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white'
             }`}
           >
-            Light Minimal
+            Dark Tactical
           </button>
           <button
             onClick={() => setBaseMap('satellite')}
             className={`px-2.5 py-1 rounded transition-colors ${
-              baseMap === 'satellite' ? 'bg-indigo-600 text-white font-bold' : 'text-gray-600 hover:text-gray-900'
+              baseMap === 'satellite' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white'
             }`}
           >
             Satellite SAR
@@ -365,30 +401,22 @@ export const MarineMap: React.FC<MarineMapProps> = ({
           <button
             onClick={() => setBaseMap('osm')}
             className={`px-2.5 py-1 rounded transition-colors ${
-              baseMap === 'osm' ? 'bg-indigo-600 text-white font-bold' : 'text-gray-600 hover:text-gray-900'
+              baseMap === 'osm' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white'
             }`}
           >
             Nautical OSM
           </button>
-          <button
-            onClick={() => setBaseMap('dark')}
-            className={`px-2.5 py-1 rounded transition-colors ${
-              baseMap === 'dark' ? 'bg-indigo-600 text-white font-bold' : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Dark
-          </button>
         </div>
 
         {/* Layer toggles */}
-        <div className="bg-white/95 backdrop-blur-md border border-gray-200 rounded-lg p-3 shadow-md text-[11px] text-gray-700 space-y-2 w-48">
-          <div className="font-bold uppercase tracking-wider text-[10px] text-gray-400 pb-1.5 border-b border-gray-100 flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-indigo-600" />
+        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-lg p-2.5 shadow-lg text-[11px] text-slate-300 space-y-1.5 w-44">
+          <div className="font-bold uppercase tracking-wider text-[10px] text-slate-400 pb-1 border-b border-slate-800 flex items-center gap-1">
+            <Layers className="w-3 h-3 text-emerald-400" />
             <span>Forensic Overlays</span>
           </div>
 
-          <label className="flex items-center justify-between cursor-pointer hover:text-gray-900">
-            <span className="flex items-center gap-1.5 font-medium">
+          <label className="flex items-center justify-between cursor-pointer hover:text-white">
+            <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
               Oil Spill Slick
             </span>
@@ -396,25 +424,25 @@ export const MarineMap: React.FC<MarineMapProps> = ({
               type="checkbox"
               checked={showSlick}
               onChange={(e) => setShowSlick(e.target.checked)}
-              className="accent-indigo-600 cursor-pointer"
+              className="accent-emerald-500 cursor-pointer"
             />
           </label>
 
-          <label className="flex items-center justify-between cursor-pointer hover:text-gray-900">
-            <span className="flex items-center gap-1.5 font-medium">
-              <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+          <label className="flex items-center justify-between cursor-pointer hover:text-white">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
               Hindcast Origin
             </span>
             <input
               type="checkbox"
               checked={showBacktrack}
               onChange={(e) => setShowBacktrack(e.target.checked)}
-              className="accent-indigo-600 cursor-pointer"
+              className="accent-emerald-500 cursor-pointer"
             />
           </label>
 
-          <label className="flex items-center justify-between cursor-pointer hover:text-gray-900">
-            <span className="flex items-center gap-1.5 font-medium">
+          <label className="flex items-center justify-between cursor-pointer hover:text-white">
+            <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
               Forward Dispersion
             </span>
@@ -422,12 +450,12 @@ export const MarineMap: React.FC<MarineMapProps> = ({
               type="checkbox"
               checked={showForecast}
               onChange={(e) => setShowForecast(e.target.checked)}
-              className="accent-indigo-600 cursor-pointer"
+              className="accent-emerald-500 cursor-pointer"
             />
           </label>
 
-          <label className="flex items-center justify-between cursor-pointer hover:text-gray-900">
-            <span className="flex items-center gap-1.5 font-medium">
+          <label className="flex items-center justify-between cursor-pointer hover:text-white">
+            <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
               AIS Vessels
             </span>
@@ -435,37 +463,37 @@ export const MarineMap: React.FC<MarineMapProps> = ({
               type="checkbox"
               checked={showVessels}
               onChange={(e) => setShowVessels(e.target.checked)}
-              className="accent-indigo-600 cursor-pointer"
+              className="accent-emerald-500 cursor-pointer"
             />
           </label>
 
-          <label className="flex items-center justify-between cursor-pointer hover:text-gray-900">
-            <span className="flex items-center gap-1.5 font-medium">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+          <label className="flex items-center justify-between cursor-pointer hover:text-white">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
               Vessel Tracks
             </span>
             <input
               type="checkbox"
               checked={showTracks}
               onChange={(e) => setShowTracks(e.target.checked)}
-              className="accent-indigo-600 cursor-pointer"
+              className="accent-emerald-500 cursor-pointer"
             />
           </label>
         </div>
       </div>
 
       {/* Map Legend Overlay at Bottom Left */}
-      <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur-md border border-gray-200 rounded-lg px-3.5 py-2 text-[11px] text-gray-700 flex items-center gap-3 shadow-md">
-        <div className="flex items-center gap-1.5 font-medium">
-          <span className="w-3 h-3 rounded bg-amber-500/80 border border-amber-400 inline-block" />
+      <div className="absolute bottom-3 left-3 z-[1000] bg-slate-950/90 backdrop-blur-md border border-slate-800 rounded-lg px-3 py-2 text-[11px] text-slate-300 flex items-center gap-3 shadow-lg">
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-amber-500/80 border border-amber-300 inline-block" />
           <span>Slick Area ({detection?.spillAreaKm2} km²)</span>
         </div>
-        <div className="flex items-center gap-1.5 font-medium">
-          <span className="w-3 h-3 rounded-full bg-red-500 border border-white inline-block shadow-xs" />
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-red-500 border border-white inline-block" />
           <span>Discharge Origin</span>
         </div>
-        <div className="flex items-center gap-1.5 font-medium">
-          <span className="w-3 h-3 rounded-full bg-rose-500 inline-block shadow-xs" />
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-full bg-rose-500 inline-block" />
           <span>Prime Suspect (#1)</span>
         </div>
       </div>
