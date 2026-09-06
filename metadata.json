@@ -1,0 +1,8 @@
+{
+  "name": "SeaTrace Maritime Investigation Platform",
+  "description": "Maritime oil spill tracking, drift hindcast/forecast modeling, real-time AIS vessel correlation, and AI-powered forensic attribution.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
